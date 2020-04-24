@@ -7,10 +7,14 @@ JSONRoster = json.loads(roster)
 
 def main():
     deletePlayers = []
+    deletedNames = []
     for player in JSONRoster['freeAgents']['roster']:
         for ply in JSONRoster['freeAgents']['roster']:
-            if(player['name'] in ply['name'] and not player['name'] in deletePlayers):
+            if(player['name'] is ply['name'] and ply['name'] not in deletedNames):
+                print(ply['name'])
                 deletePlayers.append(ply)
+                deletedNames.append(ply['name'])
+
 
     delete(deletePlayers)
     f = open("roster2.json", "w")
@@ -22,9 +26,8 @@ def main():
 
 def delete(players):
     for player in players:
-        for team in JSONRoster['teams']:
-            if(player in team['roster']):
-                team['roster'].remove(player)
+        if(player in JSONRoster['freeAgents']['roster']):
+            JSONRoster['freeAgents']['roster'].pop(JSONRoster['freeAgents']['roster'].index(player))
 
 
 
