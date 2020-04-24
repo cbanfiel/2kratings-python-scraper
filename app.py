@@ -1,13 +1,12 @@
 from bs4 import BeautifulSoup
 import requests
-import re 
+import re
 import json
 import time
 
 myRoster = requests.get('https://on-paper-sports.s3.us-east-2.amazonaws.com/basketball/NBA2019-20v4.json', timeout=5).text
 JSONRoster = json.loads(myRoster)
 print('loaded roster')
-
 
 def main():
     parse()
@@ -40,19 +39,19 @@ def parse():
 
             h5s = soup.findAll('h5', class_='mb-0')
             for h5 in h5s:
-                temp = re.compile("([0-9]+)([a-zA-Z ]+)") 
+                temp = re.compile("([0-9]+)([a-zA-Z ]+)")
                 try:
-                    res = temp.match(h5.text).groups() 
+                    res = temp.match(h5.text).groups()
                     info.update({res[1]: int(res[0])})
                 except:
                     pass
             lis = soup.findAll('li', class_='mb-1')
             for li in lis:
-                temp = re.compile("([0-9]+)([a-zA-Z ]+)") 
+                temp = re.compile("([0-9]+)([a-zA-Z ]+)")
                 try:
-                    res = temp.match(li.text).groups() 
+                    res = temp.match(li.text).groups()
                     info.update({res[1]: int(res[0])})
-                    
+
                 except:
                     break
             ratings = convert(info, player)
@@ -66,6 +65,7 @@ def parse():
     team = JSONRoster['freeAgents']
     print(team['name'])
     for player in team["roster"]:
+        teamName = ''
         name = player["name"]
         name = name.replace(" ", "-")
         src = requests.get(f'https://www.2kratings.com/{name}').text
@@ -83,25 +83,25 @@ def parse():
 
         h5s = soup.findAll('h5', class_='mb-0')
         for h5 in h5s:
-            temp = re.compile("([0-9]+)([a-zA-Z ]+)") 
+            temp = re.compile("([0-9]+)([a-zA-Z ]+)")
             try:
-                res = temp.match(h5.text).groups() 
+                res = temp.match(h5.text).groups()
                 info.update({res[1]: int(res[0])})
             except:
                 pass
         lis = soup.findAll('li', class_='mb-1')
         for li in lis:
-            temp = re.compile("([0-9]+)([a-zA-Z ]+)") 
+            temp = re.compile("([0-9]+)([a-zA-Z ]+)")
             try:
-                res = temp.match(li.text).groups() 
+                res = temp.match(li.text).groups()
                 info.update({res[1]: int(res[0])})
-                
+
             except:
                 break
         ratings = convert(info, player)
         player.update(ratings)
         if(len(teamName) > 3):
-            if(team['name'] != teamName):
+            if('Free Agency' != teamName):
                 print(f'moved {player["name"]} to the {teamName}')
                 movedPlayers.append({'player': player, 'team': teamName})
         time.sleep(.5)
@@ -112,7 +112,7 @@ def convert(ratings, player):
     #off = closeshot + midrange + three + shotiq + layup + standingdunk + dirivingdun + hook + fade
     try:
         offense = int(ratings[' Outside Scoring']) if int(ratings[' Outside Scoring']) > int(ratings[' Inside Scoring']) else int(ratings[' Inside Scoring'])
-        defense = ratings[' Defending'] 
+        defense = ratings[' Defending']
         threePoint = ratings['Three']
         rebound = ratings[' Rebounding']
         freeThrow = ratings['Free Throw']
@@ -133,8 +133,9 @@ def movePlayers(movedPlayers):
                 team['roster'].append(trade['player'])
                 movedSuccessfully = True
         if(not movedSuccessfully):
-            freeAgents.append(trade['player'])
-        
+            if(trade['team'] == 'Free Agency'):
+                freeAgents.append(trade['player'])
+
     print(len(freeAgents))
     JSONRoster['freeAgents']['roster'] = JSONRoster['freeAgents']['roster'] + freeAgents
 
